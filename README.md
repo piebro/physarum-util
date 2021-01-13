@@ -1,5 +1,17 @@
 # Physarum Util
 
+A command line tool to generate Physarum Transport Networks with [fogleman/physarum](https://github.com/fogleman/physarum).
+
+## Installation
+
+First install go and then install and clone physarum-util.
+
+```bash
+go get -u github.com/piebro/physarum-util
+git clone git@github.com:piebro/physarum-util.git
+cd physarum-util
+```
+
 ## Usage
 
 ```bash
