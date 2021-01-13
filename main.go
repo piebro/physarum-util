@@ -28,9 +28,18 @@ const (
 func one(model *physarum.Model, iterations int, path string) {
 	fmt.Println()
 	fmt.Println(path)
-	fmt.Println(len(model.Particles), "particles")
-	physarum.PrintConfigs(model.Configs, model.AttractionTable)
-	physarum.SummarizeConfigs(model.Configs)
+	//fmt.Println(len(model.Particles), "particles")
+
+	for _, c := range model.Configs {
+		fmt.Printf("Config{%v, %v, %v, %v, %v, %v},",
+			c.SensorAngle,
+			c.SensorDistance,
+			c.RotationAngle,
+			c.StepDistance,
+			c.DepositionAmount,
+			c.DecayFactor)
+	}
+	fmt.Println()
 
 	bar := pb.Full.Start(iterations)
 	bar.SetWidth(80)
