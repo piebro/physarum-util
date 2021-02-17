@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"image/color"
@@ -17,16 +18,6 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/fogleman/physarum/pkg/physarum"
-)
-
-const (
-	width      = 1024
-	height     = 1024
-	particles  = 1 << 22
-	iterations = 400
-	blurRadius = 1
-	//blurPasses = 2
-	zoomFactor = 1
 )
 
 func one(model *physarum.Model, iterations int, savePath string, palette physarum.Palette) {
@@ -93,13 +84,16 @@ func getColor(colorType string) physarum.Palette {
 	return pallete
 }
 
-func getModelSettingsString(model *physarum.Model, palette physarum.Palette, savePath string, zoom float64) string {
+func getModelSettingsString(model *physarum.Model, palette physarum.Palette, savePath string, zoom float64, particlesPowerOfTwo int) string {
 	var out string
 	out = ""
 	out += fmt.Sprintf("%v ", savePath)
 	out += fmt.Sprintf("-size %v ", model.W)
 	out += fmt.Sprintf("-zoom %v ", zoom)
 	out += fmt.Sprintf("-blurPasses %v ", model.BlurPasses)
+	out += fmt.Sprintf("-blurRadius %v ", model.BlurRadius)
+	out += fmt.Sprintf("-particlesPowerOfTwo %v ", particlesPowerOfTwo)
+	out += fmt.Sprintf("-iterations %v ", model.Iteration)
 	out += "-config \""
 	for _, c := range model.Configs {
 		out += fmt.Sprintf("Config{%v, %v, %v, %v, %v, %v},",
@@ -112,7 +106,7 @@ func getModelSettingsString(model *physarum.Model, palette physarum.Palette, sav
 	}
 	out = out[:len(out)-1]
 	out += "\" -color \""
-	for _, c := range palette[:len(model.Configs)-1] {
+	for _, c := range palette[:len(model.Configs)] {
 		out += fmt.Sprintf("#%02X%02X%02X ", c.R, c.G, c.B)
 	}
 	out = out[:len(out)-1]
@@ -121,15 +115,70 @@ func getModelSettingsString(model *physarum.Model, palette physarum.Palette, sav
 }
 
 func main() {
-
-	pathRaw := flag.String("path", "out%d.png", "%d will be the time")
+	pathRaw := flag.String("path", "out_%d.png", "%d will be the time")
 	size := flag.Int("size", 1024, "")
-	configType := flag.String("config", "random", "choices: cyclone, dunes, dot grid, untitled, cool")
+	configType := flag.String("config", "random", "")
 	colorType := flag.String("color", "random", "")
 	zoom := flag.Float64("zoom", 1, "")
 	blurPasses := flag.Int("blurPasses", 2, "")
+	blurRadius := flag.Int("blurRadius", 1, "")
 	numOfExamples := flag.Int("numOfExamples", -1, "")
+	particlesPowerOfTwo := flag.Int("particlesPowerOfTwo", 22, "")
+	iterations := flag.Int("iterations", 400, "")
+	logPath := flag.String("logPath", "", "")
+
+	configLogPath := flag.String("configLogPath", "", "")
+	configsLike := flag.String("configsLike", "", "")
+
 	flag.Parse()
+
+	// read log and use config from log
+	if *configLogPath != "" && *configsLike != "" {
+		file, err := os.Open(*configLogPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			logConfigs := strings.Split(scanner.Text(), " ")
+			if strings.Contains(logConfigs[0], *configsLike) {
+				visitedFlags := ""
+				flag.Visit(func(f *flag.Flag) {
+					visitedFlags += f.Name + " "
+				})
+				logConfigsOtherSplit := strings.Split(scanner.Text(), "\"")
+				if !strings.Contains(visitedFlags, "size ") {
+					*size, err = strconv.Atoi(logConfigs[2])
+				}
+				if !strings.Contains(visitedFlags, "zoom ") {
+					*zoom, err = strconv.ParseFloat(logConfigs[4], 10)
+				}
+				if !strings.Contains(visitedFlags, "blurPasses ") {
+					*blurPasses, err = strconv.Atoi(logConfigs[6])
+				}
+				if !strings.Contains(visitedFlags, "blurRadius ") {
+					*blurRadius, err = strconv.Atoi(logConfigs[8])
+				}
+				if !strings.Contains(visitedFlags, "particlesPowerOfTwo ") {
+					*particlesPowerOfTwo, err = strconv.Atoi(logConfigs[10])
+				}
+				if !strings.Contains(visitedFlags, "iterations ") {
+					*iterations, err = strconv.Atoi(logConfigs[12])
+				}
+				if !strings.Contains(visitedFlags, "config ") {
+					*configType = logConfigsOtherSplit[1]
+				}
+				if !strings.Contains(visitedFlags, "particlesPowerOfTwo ") {
+					*colorType = logConfigsOtherSplit[3]
+				}
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	if *numOfExamples < 0 {
 		*numOfExamples = 10000000
@@ -141,24 +190,28 @@ func main() {
 		n, configs := getConfig(*configType)
 		palette := getColor(*colorType)
 		table := physarum.RandomAttractionTable(n)
+		particles := 1 << *particlesPowerOfTwo
 		model := physarum.NewModel(
-			*size, *size, particles, blurRadius, *blurPasses, zoomFactor*float32(*size)/1024*float32(*zoom),
+			*size, *size, particles, *blurRadius, *blurPasses, float32(*size)/1024*float32(*zoom),
 			configs, table)
 
 		now := (time.Now().UTC().UnixNano() / 1e8) % 1e9
 		savePath := fmt.Sprintf(*pathRaw, now)
 
 		os.MkdirAll(path.Dir(savePath), os.ModePerm)
-		one(model, iterations, savePath, palette)
+		one(model, *iterations, savePath, palette)
 
-		modelString := getModelSettingsString(model, palette, savePath, *zoom)
-		f, err := os.OpenFile("generations.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Println(err)
-		}
-		defer f.Close()
-		if _, err := f.WriteString(modelString); err != nil {
-			log.Println(err)
+		modelString := getModelSettingsString(model, palette, savePath, *zoom, *particlesPowerOfTwo)
+
+		if *logPath != "" {
+			f, err := os.OpenFile(*logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				log.Println(err)
+			}
+			defer f.Close()
+			if _, err := f.WriteString(modelString); err != nil {
+				log.Println(err)
+			}
 		}
 	}
 }
