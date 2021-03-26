@@ -115,20 +115,20 @@ func getModelSettingsString(model *physarum.Model, palette physarum.Palette, sav
 }
 
 func main() {
-	pathRaw := flag.String("path", "out_%d.png", "%d will be the time")
-	size := flag.Int("size", 1024, "")
+	pathRaw := flag.String("path", "out_%d.png", "Save path, %d will be the time.")
+	size := flag.Int("size", 1024, "Size in pixel, must be multiple of 2.")
 	configType := flag.String("config", "random", "")
 	colorType := flag.String("color", "random", "")
 	zoom := flag.Float64("zoom", 1, "")
 	blurPasses := flag.Int("blurPasses", 2, "")
 	blurRadius := flag.Int("blurRadius", 1, "")
-	numOfExamples := flag.Int("numOfExamples", -1, "")
-	particlesPowerOfTwo := flag.Int("particlesPowerOfTwo", 22, "")
-	iterations := flag.Int("iterations", 400, "")
-	logPath := flag.String("logPath", "", "")
+	numOfExamples := flag.Int("numOfExamples", -1, "Number of images generated. -1 means infinte.")
+	particlesPowerOfTwo := flag.Int("particlesPowerOfTwo", 22, "Particle count as a power of 2.")
+	iterations := flag.Int("iterations", 400, "Number of simulation iterations.")
+	logPath := flag.String("logPath", "", "Path of logfile for saving the configs into.")
 
-	configLogPath := flag.String("configLogPath", "", "")
-	configsLike := flag.String("configsLike", "", "")
+	configLogPath := flag.String("configLogPath", "", "Path of logfile to lookup configs.")
+	configsLike := flag.String("configsLike", "", "Relative path of image to use as config.")
 
 	flag.Parse()
 
