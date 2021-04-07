@@ -23,7 +23,6 @@ import (
 func one(model *physarum.Model, iterations int, savePath string, palette physarum.Palette) {
 	fmt.Println()
 	fmt.Println(savePath)
-	//fmt.Println(len(model.Particles), "particles")
 
 	bar := pb.Full.Start(iterations)
 	bar.SetWidth(80)
@@ -132,7 +131,7 @@ func main() {
 
 	flag.Parse()
 
-	// read log and use config from log
+	// read log and use config from log if flag is not set
 	if *configLogPath != "" && *configsLike != "" {
 		file, err := os.Open(*configLogPath)
 		if err != nil {
@@ -170,7 +169,7 @@ func main() {
 				if !strings.Contains(visitedFlags, "config ") {
 					*configType = logConfigsOtherSplit[1]
 				}
-				if !strings.Contains(visitedFlags, "particlesPowerOfTwo ") {
+				if !strings.Contains(visitedFlags, "color ") {
 					*colorType = logConfigsOtherSplit[3]
 				}
 			}
