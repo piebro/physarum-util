@@ -23,7 +23,7 @@ go run main.go -size 1024 -path random/random_%d.png --logPath "random.log"
 If the logPath is set, the setting to generate similar images is saved in the log file. You can use it like this:
 
 ```bash
-go run main.go -size 1024 -path 1024/1024_%d.png --configLogPath "random.log" --configsLike "random/random_134836929.png" -numOfExamples 5
+go run main.go -size 1024 -path 1024/1024_%d.png --configLogPath "examples.log" --configsLike "examples/random_133621388.png" -numOfExamples 5
 ```
 
 You can also manually set all options and generate images like this:
@@ -34,16 +34,24 @@ go run main.go -size 1024 -path 1024/1024_%d.png -zoom 1 -blurPasses 2 -blurRadi
 
 You can can see all Options with ```go run main.go --help```.
 
-## Examples
+## Example images
 
-Examples can be found at [fogleman/physarum](https://github.com/fogleman/physarum).
+![example image 1](examples/random_133621388.png)
+
+![example image 2](examples/random_133248744.png)
+
+![example image 3](examples/random_133880739.png)
+
+![example image 4](examples/random_133359957.png)
+
+![example image 5](examples/random_133429343.png)
 
 ## High Resolution Images
 
 For printing high resolution images are handy. You can look for a setting you like in a lower resolution and then use:
 
 ```bash
-go run main.go -size 4096 -path 4096/4096_%d.png --configLogPath "random.log" --configsLike "random/random_134836929.png" -numOfExamples 1 -particlesPowerOfTwo 26
+go run main.go -size 4096 -path 4096/4096_%d.png -configLogPath "examples.log" -configsLike "examples/random_133621388.png" -numOfExamples 1 -particlesPowerOfTwo 26 -blurRadius 4
 ```
 
-The taget resolution needs to be a multiple of 2. For a highes resolution images more particles are needed to make it look good. The default is ```-particlesPowerOfTwo 22```.
+The taget resolution needs to be a multiple of 2. For a high resolution images more particles and a bigger blur radius is needed to make it look like the low resolution image.
